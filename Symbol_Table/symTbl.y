@@ -23,6 +23,8 @@
   int struct_index = 0;
   ST st[10000];
   char x[10];
+  char error_variables[100][100];
+  int error_no=-1;
 %}
 %start S
 %token T_IDENTIFIER T_NUM T_lt T_gt T_lteq T_gteq T_neq T_eqeq T_plus T_min T_mul T_div T_and T_or T_incr T_decr T_not T_eq T_WHILE T_INT T_DOUBLE T_CHAR T_FLOAT 
@@ -57,6 +59,7 @@ C
       | C LOOPS 
       | statement T_sc 
       | LOOPS 
+      | error 
       ;
 
 LOOPS
@@ -98,31 +101,31 @@ COND
       ;
 
 ASSIGN_EXPR
-      : T_IDENTIFIER T_eq EXP {search_id($1,@1.last_line);update($1,@1.last_line,$3); printf("This is assign without type\n");}
-      | TYPE T_IDENTIFIER T_eq EXP {lookup($2,@1.last_line,'I',NULL,$1);update($2,@1.last_line,$4); printf("This is assign with type\n");}
+      : T_IDENTIFIER T_eq EXP {search_id($1,@1.last_line);update($1,@1.last_line,$3);}// printf("This is assign without type\n");}
+      | TYPE T_IDENTIFIER T_eq EXP {lookup($2,@1.last_line,'I',NULL,$1);update($2,@1.last_line,$4); }//printf("This is assign with type\n");}
       ;
 
 EXP
-      : ADDSUB {printf(" This is ADDSUB %s\n",$$);}
-      | EXP T_lt ADDSUB {sprintf($$,"%d",atoi($1)<atoi($3)); printf("This is less than expression\n");}
-      | EXP T_gt ADDSUB {sprintf($$,"%d",atoi($1)>atoi($3));printf("This is greater than expression\n");}
+      : ADDSUB //{printf(" This is ADDSUB %s\n",$$);}
+      | EXP T_lt ADDSUB {sprintf($$,"%d",atoi($1)<atoi($3));}// printf("This is less than expression\n");}
+      | EXP T_gt ADDSUB {sprintf($$,"%d",atoi($1)>atoi($3));}//printf("This is greater than expression\n");}
       ;
       
 ADDSUB
-      : TERM {printf("This is term\n");}
-      | EXP T_plus TERM {sprintf($$,"%d",atoi($1)+atoi($3)); printf("This is addition %s\n", $$);}
-      | EXP T_min TERM {sprintf($$,"%d",atoi($1)-atoi($3)); printf("This is minus \n");}
+      : TERM //{printf("This is term\n");}
+      | EXP T_plus TERM {sprintf($$,"%d",atoi($1)+atoi($3)); }//printf("This is addition %s\n", $$);}
+      | EXP T_min TERM {sprintf($$,"%d",atoi($1)-atoi($3)); }//printf("This is minus \n");}
       ;
 
 TERM
-      : FACTOR {printf("This is Factor\n");}
-      | TERM T_mul FACTOR {sprintf($$,"%d",atoi($1)*atoi($3));printf("This is multiplication\n");}
-      | TERM T_div FACTOR {sprintf($$,"%d",atoi($1)/atoi($3)); printf("This is division\n");}
+      : FACTOR //{printf("This is Factor\n");}
+      | TERM T_mul FACTOR {sprintf($$,"%d",atoi($1)*atoi($3));}//printf("This is multiplication\n");}
+      | TERM T_div FACTOR {sprintf($$,"%d",atoi($1)/atoi($3));}// printf("This is division\n");}
       ;
       
 FACTOR
-      : LIT  {printf("This is LIT\n");}
-      | T_oob EXP T_cob {$$=$2; printf("This is EXp with brackets %s\n", $$);}
+      : LIT  //{printf("This is LIT\n");}
+      | T_oob EXP T_cob {$$=$2; }//printf("This is EXp with brackets %s\n", $$);}
       ;
 
 
@@ -131,8 +134,8 @@ PRINT
       | T_COUT T_lt T_lt T_STRING T_lt T_lt T_ENDL
       
 LIT
-      : T_IDENTIFIER {search_id($1,@1.last_line);sprintf($$,"%d",get_val($1));printf("This is T_IDENTIFIER\n");}
-      | T_NUM {printf("This is number %s\n", $1);}
+      : T_IDENTIFIER {search_id($1,@1.last_line);sprintf($$,"%d",get_val($1));}//printf("This is T_IDENTIFIER\n");}
+      | T_NUM //{printf("This is number %s\n", $1);}
       ;
 TYPE
       : T_INT 
@@ -255,8 +258,21 @@ void search_id(char *token,int lineno)
   }
   if(flag == 0)
   {
-    printf("Error at line %d : %s is not defined\n",lineno,token);
-    exit(0);
+	int flag2=0;
+	for(int i=0;i<error_no+1;i++)
+	{
+		if(!strcmp(token,error_variables[i]))
+		flag2=1;
+		//printf("%s\n",error_variables[i]);
+	}
+    
+	if(flag2 ==0)
+    {
+	printf("Error at line %d : %s is not defined\n",lineno,token);
+	error_no+=1;
+	strcpy(error_variables[error_no],token);
+	}
+   
   }
 }
 
@@ -278,8 +294,20 @@ void update(char *token,int lineno,char *value)
   }
   if(flag == 0)
   {
-    printf("Error at line %d : %s is not defined\n",lineno,token);
-    exit(0);
+	int flag2=0;
+	for(int i=0;i<error_no+1;i++)
+	{
+		if(!strcmp(token,error_variables[i]))
+		flag2=1;
+	}
+    
+	if(flag2 ==0)
+    {
+	printf("Error at line %d : %s is not defined\n",lineno,token);
+	error_no+=1;
+	strcpy(error_variables[error_no],token);
+	}
+   
   }
 }
 
@@ -299,7 +327,21 @@ int get_val(char *token)
   }
   if(flag == 0)
   {
-    printf("Error at line : %s is not defined\n",token);
-    exit(0);
+	int flag2=0;
+	//printf("%d\n",error_no);
+	for(int i=0;i<error_no+1;i++)
+	{
+		if(!strcmp(token,error_variables[i]))
+		flag2=1;
+		//printf("%s\n",error_variables[i]);
+	}
+    
+	if(flag2 ==0)
+    {
+	printf("Error : %s is not defined\n",token);
+	error_no+=1;
+	strcpy(error_variables[error_no],token);
+	}
+   
   }
 }

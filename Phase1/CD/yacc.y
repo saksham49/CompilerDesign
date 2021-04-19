@@ -36,7 +36,7 @@ S
       ;
 
 START
-      : T_INCLUDE T_lt T_HEADER T_gt MAIN T_error
+      : T_INCLUDE T_lt T_HEADER T_gt MAIN
       | T_INCLUDE "\"" T_HEADER "\"" MAIN
       ;
 
@@ -49,7 +49,7 @@ BODY
       : LEFT C RIGHT C
  	  | LEFT C RIGHT
  	  | %empty
- 	  //| error {error_count++; printf("ERROR at line number %d\n", @1.first_line);}
+ 	  | error 
       ;
 
 C
@@ -57,7 +57,7 @@ C
       | C LOOPS
       | statement T_sc
       | LOOPS
-      | error//{error_count++; printf("ERROR at line number %d\n", @1.first_line);}
+      | error 
       ;
 
 LOOPS
@@ -65,14 +65,14 @@ LOOPS
       | T_FOR T_oob ASSIGN_EXPR T_sc COND T_sc statement T_cob LOOPBODY
       | T_IF T_oob COND T_cob LOOPBODY 
       | T_IF T_oob COND T_cob LOOPBODY T_ELSE LOOPBODY 
-      //| error {error_count++; printf("ERROR at line number %d\n", @1.first_line);}
+      | error 
       ;
 
 LOOPBODY
   	  : LEFT C RIGHT
   	  | T_sc
   	  | statement T_sc
-  	  //| error {error_count++; printf("ERROR at line number %d\n", @1.first_line);}
+  	  | error
   	  ;
 
 statement
@@ -95,8 +95,8 @@ COND
       ;
 
 ASSIGN_EXPR
-      : T_IDENTIFIER T_eq ARITH_EXPR {char identifier[31];strcpy(identifier,check_length($1, @1.first_line));check_table_add(identifier, @1.first_line, "I", "int", NULL);}
-      | TYPE T_IDENTIFIER T_eq ARITH_EXPR {char identifier[31];strcpy(identifier,check_length($2, @1.first_line));check_table_add(identifier, @1.first_line, "I", $1, NULL);}
+      : T_IDENTIFIER T_eq ARITH_EXPR {char identifier[31];strcpy(identifier,check_length($1, @1.last_line));check_table_add(identifier, @1.last_line, "I", "int", NULL);}
+      | TYPE T_IDENTIFIER T_eq ARITH_EXPR {char identifier[31];strcpy(identifier,check_length($2, @1.last_line));check_table_add(identifier, @1.last_line, "I", $1, NULL);}
       ;
 
 ARITH_EXPR
@@ -117,11 +117,11 @@ PRINT
       | T_COUT T_lt T_lt T_STRING T_lt T_lt T_ENDL 
       | T_COUT T_lt T_lt T_NUM 
       | T_COUT T_lt T_lt T_NUM T_lt T_lt T_ENDL
-      | T_COUT T_lt T_lt T_IDENTIFIER {char identifier[31];strcpy(identifier,check_length($4, @1.first_line));}
-      | T_COUT T_lt T_lt T_IDENTIFIER T_lt T_lt T_ENDL {char identifier[31];strcpy(identifier,check_length($4, @1.first_line));}
+      | T_COUT T_lt T_lt T_IDENTIFIER {char identifier[31];strcpy(identifier,check_length($4, @1.last_line));}
+      | T_COUT T_lt T_lt T_IDENTIFIER T_lt T_lt T_ENDL {char identifier[31];strcpy(identifier,check_length($4, @1.last_line));}
       ;
 LIT
-      : T_IDENTIFIER {char identifier[31];strcpy(identifier,check_length($1, @1.first_line));check_table_add(identifier, @1.first_line, "I", NULL, NULL);}
+      : T_IDENTIFIER {char identifier[31];strcpy(identifier,check_length($1, @1.last_line));check_table_add(identifier, @1.last_line, "I", NULL, NULL);}
       | T_NUM
       ;
 TYPE
@@ -172,8 +172,9 @@ RIGHT
 
 #include "lex.yy.c"
 
-int yyerror(){
-  printf("Error for %s at line number %d \n",yytext, yylineno);
+int yyerror(char *s){
+  printf("Error: %s at line %d \n",yytext,yylineno);
+//printf("Error :%s at %d \n",yytext,yylineno);
 }
 
 int main(int argc, char *argv[])
@@ -235,7 +236,7 @@ char* check_length(char* tok, int line) {
 		for(int letter=0; letter<31; letter++){
 			identifier[letter] = tok[letter];
 		}
-		printf("ERROR Invalid Identifier Length at line %d, truncated for use\n", line);
+		printf("ERROR Invalid Identifier Length at %d, truncated for use\n", line);
 	}
 	else {
 		for(int letter=0; letter<length; letter++){

@@ -43,6 +43,7 @@ MAIN
 
 BODY
       : '{' C '}'
+      | error 
       ;
 
 C
@@ -56,12 +57,14 @@ C
 LOOPS
       : T_WHILE {while1();} '(' COND ')'{while2();} LOOPBODY{while3();}
       | T_IF '(' COND ')' {ifelse1();} LOOPBODY{ifelse2();} T_ELSE LOOPBODY{ifelse3();}
+      | error
       ;
 
 LOOPBODY
   	  : '{' LOOPC '}'
   	  | ';'
   	  | statement ';'
+          | error 
   	  ;
 
 LOOPC

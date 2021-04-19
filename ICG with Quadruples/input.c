@@ -2,7 +2,7 @@
 void main()
 {
         int b = a*b;
-        while( a>b ){
+        while( a>b ){ 
                 a = a+1;
         }
         if( b < = c ){

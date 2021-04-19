@@ -65,6 +65,6 @@ digit [0-9]
 "}"     {yylval = strdup(yytext);return T_ccb;}
 
 
-.    {yylval = strdup(yytext0; return T_error;}
+.    return yytext[0];
 
 %%
